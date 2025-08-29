@@ -11,8 +11,8 @@
   
   "data_config": {
     "data_source": "xiong_an",
-    "xiong_an_data_path": "../dataset/xiongan.mat",
-    "xiong_an_gt_path": "../dataset/xiongan_gt.mat",
+    "xiong_an_data_path": "../dataset/xian.mat",
+    "xiong_an_gt_path": "../dataset/xian_gt.mat",
     "synthetic_height": 100,
     "synthetic_width": 100,
     "synthetic_bands": 250,
