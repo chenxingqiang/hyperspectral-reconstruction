@@ -1,0 +1,53 @@
+{
+  "_comment": "Configuration file for Hyperspectral Reconstruction Pipeline",
+  
+  "detector_config": {
+    "num_detectors": 15,
+    "wavelength_range": [400, 1000],
+    "detector_fwhm": 50.0,
+    "peak_transmittance": 0.5,
+    "overlap_factor": 0.8
+  },
+  
+  "data_config": {
+    "data_source": "xiong_an",
+    "xiong_an_data_path": "../dataset/xiongan.mat",
+    "xiong_an_gt_path": "../dataset/xiongan_gt.mat",
+    "synthetic_height": 100,
+    "synthetic_width": 100,
+    "synthetic_bands": 250,
+    "synthetic_classes": 5,
+    "num_samples": 2000,
+    "sampling_method": "random"
+  },
+  
+  "preprocessing": {
+    "normalization": "minmax",
+    "remove_bad_bands": true,
+    "noise_threshold": 0.01
+  },
+  
+  "simulation": {
+    "noise_level": 0.01
+  },
+  
+  "reconstruction": {
+    "alpha_selection": "cv",
+    "cv_folds": 5,
+    "alpha_range": [1e-6, 1e2],
+    "n_alphas": 50
+  },
+  
+  "visualization": {
+    "generate_plots": true,
+    "plot_num_samples": 8,
+    "save_plots": true
+  },
+  
+  "output": {
+    "save_results": true,
+    "save_model": true,
+    "save_detector_config": true,
+    "verbose": true
+  }
+}

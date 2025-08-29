@@ -1,0 +1,37 @@
+{
+  "num_detectors": 15,
+  "wavelength_range": [
+    400,
+    1000
+  ],
+  "detector_fwhm": 50.0,
+  "peak_transmittance": 0.5,
+  "overlap_factor": 0.8,
+  "data_source": "synthetic",
+  "xiong_an_data_path": "../2.xiongan\u96c4\u5b89\u65b0\u533a\u822a\u7a7a\u9ad8\u5149\u8c31\u9065\u611f\u5f71\u50cf\u5206\u7c7b\u6570\u636e\u96c6/xiongan.mat",
+  "xiong_an_gt_path": "../2.xiongan\u96c4\u5b89\u65b0\u533a\u822a\u7a7a\u9ad8\u5149\u8c31\u9065\u611f\u5f71\u50cf\u5206\u7c7b\u6570\u636e\u96c6/xiongan_gt.mat",
+  "synthetic_height": 100,
+  "synthetic_width": 100,
+  "synthetic_bands": 250,
+  "synthetic_classes": 5,
+  "num_samples": 100,
+  "sampling_method": "random",
+  "normalization": "minmax",
+  "remove_bad_bands": true,
+  "noise_threshold": 0.01,
+  "noise_level": 0.01,
+  "alpha_selection": "cv",
+  "cv_folds": 5,
+  "alpha_range": [
+    1e-06,
+    100.0
+  ],
+  "n_alphas": 50,
+  "generate_plots": true,
+  "plot_num_samples": 8,
+  "save_plots": true,
+  "save_results": true,
+  "save_model": true,
+  "save_detector_config": true,
+  "verbose": false
+}
