@@ -2,7 +2,7 @@
 
 ## 📊 数据集概览
 
-### 雄安新区高光谱数据集规格
+### 西安新区高光谱数据集规格
 - **光谱范围**: 400-1000nm (250个波段)
 - **空间分辨率**: 0.5m
 - **影像大小**: 3750×1580像元
@@ -14,10 +14,9 @@
 ```
 项目根目录/
 ├── dataset/                           # 数据集目录
-│   ├── xiongan.mat                   # 主要高光谱影像数据 (2.3GB)
-│   ├── xiongan_gt.mat                # 地物类别标注数据 (114KB)
+│   ├── xian.mat                   # 主要高光谱影像数据 (2.3GB)
+│   ├── xian_gt.mat                # 地物类别标注数据 (114KB)
 │   ├── datainstruction.md            # 详细数据说明文档
-│   └── 雄安新区高光谱数据集简介.pdf    # 数据集介绍
 │
 └── hyperspectral_reconstruction/      # 重建系统目录
     ├── config/default_config.json    # 配置文件(已配置正确路径)
@@ -33,8 +32,8 @@
 {
   "data_config": {
     "data_source": "synthetic",           # 当前设置为合成数据
-    "xiong_an_data_path": "../dataset/xiongan.mat",      # ✅ 正确
-    "xiong_an_gt_path": "../dataset/xiongan_gt.mat",     # ✅ 正确
+    "xian_data_path": "../dataset/xian.mat",      # ✅ 正确
+    "xian_gt_path": "../dataset/xian_gt.mat",     # ✅ 正确
     "num_samples": 2000,                  # 样本数量
     "sampling_method": "random"           # 采样方法
   }
@@ -46,7 +45,7 @@
 ### 1. 使用雄安真实数据集
 ```bash
 cd hyperspectral_reconstruction
-python main.py --data-source xiong_an
+python main.py --data-source xian
 ```
 
 ### 2. 使用合成数据 (默认)
@@ -58,7 +57,7 @@ python main.py --data-source synthetic
 ### 3. 自定义配置运行
 ```bash
 cd hyperspectral_reconstruction
-python main.py --config config/custom_config.json --data-source xiong_an --num-samples 1000
+python main.py --config config/custom_config.json --data-source xian --num-samples 1000
 ```
 
 ## 📋 数据加载流程详解
@@ -67,8 +66,8 @@ python main.py --config config/custom_config.json --data-source xiong_an --num-s
 系统会自动检测数据文件存在性：
 ```python
 # 系统会检查以下文件
-../dataset/xiongan.mat      # 主数据文件
-../dataset/xiongan_gt.mat   # 标注文件(可选)
+../dataset/xian.mat      # 主数据文件
+../dataset/xian_gt.mat   # 标注文件(可选)
 ```
 
 ### Step 2: 数据预处理
@@ -86,7 +85,7 @@ python main.py --config config/custom_config.json --data-source xiong_an --num-s
 
 ### 数据源选择
 ```json
-"data_source": "xiong_an"    # 使用雄安真实数据
+"data_source": "xian"    # 使用西安真实数据
 "data_source": "synthetic"   # 使用合成数据
 ```
 
@@ -196,7 +195,7 @@ cd hyperspectral_reconstruction
 python -c "
 from src.data_utils import HyperspectralDataLoader
 loader = HyperspectralDataLoader()
-data, gt = loader.load_xiong_an_data('../dataset/xiongan.mat', '../dataset/xiongan_gt.mat')
+data, gt = loader.load_xiong_an_data('../dataset/xian.mat', '../dataset/xian_gt.mat')
 print(f'数据形状: {data.shape}')
 print(f'标注形状: {gt.shape}')
 print(f'数据范围: [{data.min():.3f}, {data.max():.3f}]')
@@ -205,7 +204,7 @@ print(f'数据范围: [{data.min():.3f}, {data.max():.3f}]')
 
 ### 生成数据摘要报告
 ```bash
-python main.py --data-source xiong_an --num-samples 100 --quiet
+python main.py --data-source xi_an --num-samples 100 --quiet
 # 查看 results/ 目录中的 experiment_results.json
 ```
 
