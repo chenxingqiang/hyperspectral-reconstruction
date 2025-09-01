@@ -301,11 +301,19 @@ The modular design allows easy integration of other reconstruction algorithms:
 - Adjust noise level and detector parameters
 - Try different alpha selection methods
 
+**Xiong'an Data Loading Issues**:
+- **"max() iterable argument is empty"**: This occurs when the HDF5 file structure doesn't match expected patterns. The system will now show available keys to help debug. Common solutions:
+  - Verify the `.mat` file contains hyperspectral data (look for keys like 'XiongAn', 'xiongan', 'data')
+  - Check if the file is corrupted or incomplete
+  - Ensure you have the correct Xiong'an dataset files
+- **Windows path issues**: Use forward slashes (`/`) or double backslashes (`\\`) in config paths, or use raw strings
+- **HDF5/h5py errors**: Install or upgrade h5py: `pip install --upgrade h5py`
+
 **Visualization Errors**:
 - Ensure matplotlib backend is properly configured
 - Use `--no-plots` flag to disable visualization
 - Check file permissions for saving plots
-- Dimension mismatch (e.g., “x and y must have same first dimension”): make sure you are using the updated code that aligns detector wavelengths to the dataset. If you previously saved detector configs, rerun to regenerate, or delete prior `results/.../data/detector_config.npz` before re-running.
+- Dimension mismatch (e.g., "x and y must have same first dimension"): make sure you are using the updated code that aligns detector wavelengths to the dataset. If you previously saved detector configs, rerun to regenerate, or delete prior `results/.../data/detector_config.npz` before re-running.
 
 ## Accuracy Optimization
 
