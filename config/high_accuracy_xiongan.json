@@ -1,0 +1,41 @@
+{
+  "detector_config": {
+    "num_detectors": 31,
+    "wavelength_range": [400, 1000],
+    "detector_fwhm": 40.0,
+    "peak_transmittance": 0.5,
+    "overlap_factor": 0.7
+  },
+  "data_config": {
+    "data_source": "xiong_an",
+    "xiong_an_data_path": "../dataset/xiongan.mat",
+    "xiong_an_gt_path": "../dataset/xiongan_gt.mat",
+    "num_samples": 6000,
+    "sampling_method": "random"
+  },
+  "preprocessing": {
+    "normalization": "minmax",
+    "remove_bad_bands": true,
+    "noise_threshold": 0.02
+  },
+  "reconstruction": {
+    "alpha_selection": "cv",
+    "cv_folds": 10,
+    "alpha_range": [1e-8, 1e3],
+    "n_alphas": 100
+  },
+  "simulation": {
+    "noise_level": 0.0
+  },
+  "visualization": {
+    "generate_plots": true,
+    "save_plots": true
+  },
+  "output": {
+    "save_results": true,
+    "save_model": true,
+    "save_detector_config": true,
+    "verbose": true
+  }
+}
+

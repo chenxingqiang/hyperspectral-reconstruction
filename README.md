@@ -288,6 +288,98 @@ The modular design allows easy integration of other reconstruction algorithms:
 - Use `--no-plots` flag to disable visualization
 - Check file permissions for saving plots
 
+## Accuracy Optimization
+
+To improve reconstruction accuracy on the Xiong'an dataset, prioritize the following adjustments. These map to config keys and command-line flags in this project.
+
+- Increasing information captured
+  - Increase detectors: set `num_detectors` from 15 to 25–31.
+  - Narrow bandwidth: reduce `detector_fwhm` (e.g., 50 → 35–45nm) to increase spectral resolution.
+  - Reduce excessive overlap: set `overlap_factor` to 0.6–0.7.
+
+- Stronger model selection
+  - Keep `alpha_selection: cv` and increase `cv_folds` to 10.
+  - Widen α search: `alpha_range` to `[1e-8, 1e3]`, and `n_alphas` to `100`.
+
+- Better samples
+  - Increase `num_samples` to 4000–8000 if memory allows.
+  - Prefer more uniform/stratified sampling if added in future; for now `random` is fine.
+
+- Robust preprocessing
+  - Keep `normalization: minmax` or try `standard` (pick the best empirically).
+  - Increase `noise_threshold` (e.g., 0.02–0.03) to drop noisy bands.
+
+- Noise and consistency
+  - When using real data, set `noise_level: 0.0`.
+  - The pipeline will auto-align detector wavelengths to the data’s grid.
+
+### Ready-to-run high-accuracy config
+
+Use the provided config to apply the above settings:
+
+```bash
+python main.py --config config/high_accuracy_xiongan.json
+```
+
+Config contents (created at `config/high_accuracy_xiongan.json`):
+
+```json
+{
+  "detector_config": {
+    "num_detectors": 31,
+    "wavelength_range": [400, 1000],
+    "detector_fwhm": 40.0,
+    "peak_transmittance": 0.5,
+    "overlap_factor": 0.7
+  },
+  "data_config": {
+    "data_source": "xiong_an",
+    "xiong_an_data_path": "../dataset/xiongan.mat",
+    "xiong_an_gt_path": "../dataset/xiongan_gt.mat",
+    "num_samples": 6000,
+    "sampling_method": "random"
+  },
+  "preprocessing": {
+    "normalization": "minmax",
+    "remove_bad_bands": true,
+    "noise_threshold": 0.02
+  },
+  "reconstruction": {
+    "alpha_selection": "cv",
+    "cv_folds": 10,
+    "alpha_range": [1e-8, 1e3],
+    "n_alphas": 100
+  },
+  "simulation": {
+    "noise_level": 0.0
+  },
+  "visualization": {
+    "generate_plots": true,
+    "save_plots": true
+  },
+  "output": {
+    "save_results": true,
+    "save_model": true,
+    "save_detector_config": true,
+    "verbose": true
+  }
+}
+```
+
+### Quick command alternative
+
+You can also run with CLI overrides (for a subset of options):
+
+```bash
+python main.py \
+  --data-source xiong_an \
+  --num-samples 6000 \
+  --cv-folds 10 \
+  --noise-level 0.0
+```
+
+For advanced options (e.g., changing detector parameters), prefer the JSON config above.
+
 ## Scientific Background
 
 This implementation is based on principles of:
