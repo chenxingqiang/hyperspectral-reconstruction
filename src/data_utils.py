@@ -11,6 +11,7 @@ from typing import Tuple, Optional, Union, Dict, Any
 import os
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 import warnings
+import h5py
 
 
 class HyperspectralDataLoader:
@@ -43,32 +44,94 @@ class HyperspectralDataLoader:
         try:
             # Load main data
             if data_path.endswith('.mat'):
-                data_dict = sio.loadmat(data_path)
-                # Common variable names in Xiong'an dataset
-                possible_keys = ['xiongan', 'data', 'hyperspectral', 'image']
-                data_key = None
-                for key in possible_keys:
-                    if key in data_dict:
-                        data_key = key
-                        break
-                
-                if data_key is None:
-                    # Use the largest array that's not metadata
-                    data_key = max([k for k in data_dict.keys() 
-                                  if not k.startswith('__')], 
-                                 key=lambda k: data_dict[k].size)
-                
-                self.data = data_dict[data_key]
-                print(f"Loaded data with key '{data_key}' and shape: {self.data.shape}")
+                try:
+                    # First try SciPy loader (non-HDF5 .mat files)
+                    data_dict = sio.loadmat(data_path)
+                    # Common variable names in Xiong'an dataset
+                    possible_keys = ['xiongan', 'data', 'hyperspectral', 'image']
+                    data_key = None
+                    for key in possible_keys:
+                        if key in data_dict:
+                            data_key = key
+                            break
+                    if data_key is None:
+                        # Use the largest array that's not metadata
+                        data_key = max([k for k in data_dict.keys() if not k.startswith('__')],
+                                       key=lambda k: data_dict[k].size)
+                    self.data = data_dict[data_key]
+                    print(f"Loaded data with key '{data_key}' and shape: {self.data.shape}")
+                except NotImplementedError:
+                    # MATLAB v7.3 (HDF5) files need h5py
+                    with h5py.File(data_path, 'r') as f:
+                        # Collect datasets and pick the largest likely hyperspectral cube
+                        def _collect_datasets(h5obj, prefix=''):
+                            items = []
+                            for k, v in h5obj.items():
+                                path = f"{prefix}/{k}" if prefix else k
+                                if isinstance(v, h5py.Dataset):
+                                    items.append((path, v))
+                                elif isinstance(v, h5py.Group):
+                                    items.extend(_collect_datasets(v, path))
+                            return items
+                        datasets = _collect_datasets(f)
+                        if not datasets:
+                            raise RuntimeError("No datasets found inside HDF5 .mat file")
+                        # Choose dataset with maximum number of elements
+                        path, dset = max(datasets, key=lambda item: np.prod(item[1].shape))
+                        arr = dset[()]
+                        # Ensure dtype is float
+                        if not np.issubdtype(arr.dtype, np.floating):
+                            arr = arr.astype(np.float32)
+                        # Heuristics to move spectral bands axis to the last position if needed
+                        if arr.ndim == 3:
+                            h, w, c = arr.shape
+                            # If bands likely in first/second axis (250 typical), move to last
+                            if h == 250 and c != 250:
+                                arr = np.moveaxis(arr, 0, -1)
+                            elif w == 250 and c != 250:
+                                arr = np.moveaxis(arr, 1, -1)
+                        elif arr.ndim > 3:
+                            # Flatten leading dims except bands if we can identify bands=250
+                            band_axis = None
+                            for ax, dim in enumerate(arr.shape):
+                                if dim == 250:
+                                    band_axis = ax
+                                    break
+                            if band_axis is not None:
+                                # Move bands to last, collapse the rest to 2D spatial
+                                arr = np.moveaxis(arr, band_axis, -1)
+                                spatial = int(np.prod(arr.shape[:-1]))
+                                arr = arr.reshape(spatial, 1, arr.shape[-1])
+                        if arr.ndim != 3:
+                            raise RuntimeError(f"Unexpected dataset shape for hyperspectral cube: {arr.shape}")
+                        self.data = np.array(arr)
+                        print(f"Loaded HDF5 dataset at '{path}' with shape: {self.data.shape}")
                 
             else:
                 raise ValueError(f"Unsupported file format: {data_path}")
             
             # Load ground truth if provided
             if gt_path and os.path.exists(gt_path):
-                gt_dict = sio.loadmat(gt_path)
-                gt_key = [k for k in gt_dict.keys() if not k.startswith('__')][0]
-                self.ground_truth = gt_dict[gt_key]
+                try:
+                    gt_dict = sio.loadmat(gt_path)
+                    gt_key = [k for k in gt_dict.keys() if not k.startswith('__')][0]
+                    self.ground_truth = gt_dict[gt_key]
+                except NotImplementedError:
+                    with h5py.File(gt_path, 'r') as f:
+                        # pick first dataset
+                        def _first_dataset(h5obj):
+                            for k, v in h5obj.items():
+                                if isinstance(v, h5py.Dataset):
+                                    return v[()]
+                                if isinstance(v, h5py.Group):
+                                    found = _first_dataset(v)
+                                    if found is not None:
+                                        return found
+                            return None
+                        gt_arr = _first_dataset(f)
+                        if gt_arr is None:
+                            raise RuntimeError("No dataset found in ground truth .mat file")
+                        self.ground_truth = np.array(gt_arr)
                 print(f"Loaded ground truth with shape: {self.ground_truth.shape}")
             
             # Generate wavelengths for Xiong'an dataset (400-1000nm, 250 bands)
@@ -211,6 +274,32 @@ class HyperspectralDataLoader:
         self.data = data_reshaped.reshape(new_shape)
         
         return self.data
+
+    def resample_spectra_to(self, spectra: np.ndarray, target_wavelengths: np.ndarray) -> np.ndarray:
+        """
+        Resample spectra along the wavelength axis to target wavelengths using linear interpolation.
+
+        Args:
+            spectra: Array with shape (num_samples, num_bands)
+            target_wavelengths: 1D array of target wavelengths
+
+        Returns:
+            Resampled spectra with shape (num_samples, len(target_wavelengths))
+        """
+        if self.wavelengths is None:
+            raise ValueError("Source wavelengths are not set.")
+        source_wavelengths = self.wavelengths
+
+        # Ensure increasing order for interpolation
+        if source_wavelengths[0] > source_wavelengths[-1]:
+            source_wavelengths = source_wavelengths[::-1]
+            spectra = spectra[:, ::-1]
+
+        target_wavelengths = np.asarray(target_wavelengths)
+        resampled = np.empty((spectra.shape[0], target_wavelengths.shape[0]), dtype=np.float32)
+        for i in range(spectra.shape[0]):
+            resampled[i] = np.interp(target_wavelengths, source_wavelengths, spectra[i])
+        return resampled
     
     def extract_samples(self, 
                        num_samples: int = 1000, 
