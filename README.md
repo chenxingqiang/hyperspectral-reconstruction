@@ -95,8 +95,14 @@ Notes specific to Xiong'an data:
 
 Use the ready-to-run config for better accuracy on Xiong'an:
 
+**Linux/macOS:**
 ```bash
 python main.py --config config/high_accuracy_xiongan.json
+```
+
+**Windows:**
+```bash
+python main.py --config config/windows_high_accuracy.json
 ```
 
 This configuration includes:
