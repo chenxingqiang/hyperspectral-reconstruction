@@ -62,7 +62,9 @@ class HyperspectralDataLoader:
                     print(f"Loaded data with key '{data_key}' and shape: {self.data.shape}")
                 except NotImplementedError:
                     # MATLAB v7.3 (HDF5) files need h5py
+                    print(f"  → Using h5py for MATLAB v7.3 file: {data_path}")
                     with h5py.File(data_path, 'r') as f:
+                        print(f"  → HDF5 file opened, top-level keys: {list(f.keys())}")
                         # Collect datasets and pick the largest likely hyperspectral cube
                         def _collect_datasets(h5obj, prefix=''):
                             items = []
@@ -75,9 +77,20 @@ class HyperspectralDataLoader:
                             return items
                         datasets = _collect_datasets(f)
                         if not datasets:
-                            raise RuntimeError("No datasets found inside HDF5 .mat file")
-                        # Choose dataset with maximum number of elements
-                        path, dset = max(datasets, key=lambda item: np.prod(item[1].shape))
+                            # Try common dataset names for Xiong'an data
+                            common_names = ['XiongAn', 'xiongan', 'data', 'hyperspectral', 'image', 'hsi']
+                            found_dataset = None
+                            for name in common_names:
+                                if name in f:
+                                    found_dataset = f[name]
+                                    break
+                            if found_dataset is None:
+                                available_keys = list(f.keys())
+                                raise RuntimeError(f"No datasets found inside HDF5 .mat file. Available keys: {available_keys}")
+                            path, dset = name, found_dataset
+                        else:
+                            # Choose dataset with maximum number of elements
+                            path, dset = max(datasets, key=lambda item: np.prod(item[1].shape))
                         arr = dset[()]
                         # Ensure dtype is float
                         if not np.issubdtype(arr.dtype, np.floating):

@@ -86,6 +86,24 @@ python main.py --data-source xiong_an
 
 Note: Ensure the Xiong'an dataset files are in the correct location as specified in the configuration.
 
+Notes specific to Xiong'an data:
+- MATLAB v7.3 `.mat` files are supported via `h5py` (already listed in `requirements.txt`). If you see an error like “Please use HDF reader for matlab v7.3 files”, install or upgrade `h5py`.
+- When `--data-source xiong_an`（或配置为 `xiong_an`）时，系统不会回退到合成数据；若路径错误将直接报错。默认期望数据位于 `../dataset/xiongan.mat` 和 `../dataset/xiongan_gt.mat`。
+- 探测器响应会自动匹配数据的波段数量（如 1579），并在可视化时使用相同波长网格。
+
+### Quick Start: High Accuracy Xiong'an
+
+Use the ready-to-run config for better accuracy on Xiong'an:
+
+```bash
+python main.py --config config/high_accuracy_xiongan.json
+```
+
+This configuration includes:
+- `num_detectors = 31`, `detector_fwhm = 40.0`, `overlap_factor = 0.7`
+- `num_samples = 6000`, `noise_level = 0.0`
+- Cross-validation with `cv_folds = 10` and extended alpha search (`[1e-8, 1e3]`, `n_alphas = 100`)
+
 ### Command Line Options
 
 ```bash
@@ -287,6 +305,7 @@ The modular design allows easy integration of other reconstruction algorithms:
 - Ensure matplotlib backend is properly configured
 - Use `--no-plots` flag to disable visualization
 - Check file permissions for saving plots
+- Dimension mismatch (e.g., “x and y must have same first dimension”): make sure you are using the updated code that aligns detector wavelengths to the dataset. If you previously saved detector configs, rerun to regenerate, or delete prior `results/.../data/detector_config.npz` before re-running.
 
 ## Accuracy Optimization
 
