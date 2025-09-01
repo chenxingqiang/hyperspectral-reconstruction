@@ -46,7 +46,9 @@ class HyperspectralDataLoader:
             if data_path.endswith('.mat'):
                 try:
                     # First try SciPy loader (non-HDF5 .mat files)
+                    print(f"  → Attempting SciPy loadmat for: {data_path}")
                     data_dict = sio.loadmat(data_path)
+                    print(f"  → SciPy loaded successfully, keys: {list(data_dict.keys())}")
                     # Common variable names in Xiong'an dataset
                     possible_keys = ['xiongan', 'data', 'hyperspectral', 'image']
                     data_key = None
@@ -56,8 +58,10 @@ class HyperspectralDataLoader:
                             break
                     if data_key is None:
                         # Use the largest array that's not metadata
-                        data_key = max([k for k in data_dict.keys() if not k.startswith('__')],
-                                       key=lambda k: data_dict[k].size)
+                        non_meta_keys = [k for k in data_dict.keys() if not k.startswith('__')]
+                        if not non_meta_keys:
+                            raise ValueError(f"No data keys found in .mat file. Available keys: {list(data_dict.keys())}")
+                        data_key = max(non_meta_keys, key=lambda k: data_dict[k].size)
                     self.data = data_dict[data_key]
                     print(f"Loaded data with key '{data_key}' and shape: {self.data.shape}")
                 except NotImplementedError:
